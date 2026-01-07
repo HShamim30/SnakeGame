@@ -59,21 +59,97 @@ def draw_panel(surface, rect, alpha=200):
     surface.blit(panel, (rect[0], rect[1]))
     pygame.draw.rect(surface, HIGHLIGHT_COLOR, rect, 2, border_radius=10)
 
-def draw_snake_segment(surface, pos, is_head=False):
-    """Draw snake segment with gradient effect"""
-    rect = pygame.Rect(pos[0], pos[1], BLOCK, BLOCK)
+def draw_snake_segment(surface, pos, is_head=False, prev_pos=None, next_pos=None):
+    """Draw realistic snake segment with scales and texture"""
+    x, y = pos
     
-    # Border
-    pygame.draw.rect(surface, SNAKE_BORDER, rect, border_radius=5)
-    
-    # Inner fill
-    inner_rect = rect.inflate(-4, -4)
-    pygame.draw.rect(surface, SNAKE_COLOR, inner_rect, border_radius=4)
-    
-    # Head highlight
     if is_head:
-        highlight = pygame.Rect(pos[0] + 4, pos[1] + 4, BLOCK - 8, BLOCK - 8)
-        pygame.draw.rect(surface, (100, 255, 200), highlight, border_radius=3)
+        # HEAD - More detailed
+        # Base circle for head
+        pygame.draw.circle(surface, (40, 180, 100), (x + BLOCK//2, y + BLOCK//2), BLOCK//2)
+        pygame.draw.circle(surface, (50, 220, 120), (x + BLOCK//2, y + BLOCK//2), BLOCK//2 - 2)
+        
+        # Eyes
+        if prev_pos:
+            # Determine direction for eye placement
+            dx = x - prev_pos[0]
+            dy = y - prev_pos[1]
+            
+            if dx > 0:  # Moving right
+                eye1_pos = (x + 14, y + 6)
+                eye2_pos = (x + 14, y + 14)
+            elif dx < 0:  # Moving left
+                eye1_pos = (x + 6, y + 6)
+                eye2_pos = (x + 6, y + 14)
+            elif dy > 0:  # Moving down
+                eye1_pos = (x + 6, y + 14)
+                eye2_pos = (x + 14, y + 14)
+            else:  # Moving up
+                eye1_pos = (x + 6, y + 6)
+                eye2_pos = (x + 14, y + 6)
+        else:
+            eye1_pos = (x + 14, y + 6)
+            eye2_pos = (x + 14, y + 14)
+        
+        # Draw eyes
+        pygame.draw.circle(surface, (255, 255, 255), eye1_pos, 3)
+        pygame.draw.circle(surface, (0, 0, 0), eye1_pos, 2)
+        pygame.draw.circle(surface, (255, 255, 255), eye2_pos, 3)
+        pygame.draw.circle(surface, (0, 0, 0), eye2_pos, 2)
+        
+        # Tongue (small red forked line)
+        if prev_pos:
+            if dx > 0:  # Right
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK, y + BLOCK//2), (x + BLOCK + 4, y + BLOCK//2 - 2), 1)
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK, y + BLOCK//2), (x + BLOCK + 4, y + BLOCK//2 + 2), 1)
+            elif dx < 0:  # Left
+                pygame.draw.line(surface, (255, 50, 50), (x, y + BLOCK//2), (x - 4, y + BLOCK//2 - 2), 1)
+                pygame.draw.line(surface, (255, 50, 50), (x, y + BLOCK//2), (x - 4, y + BLOCK//2 + 2), 1)
+            elif dy > 0:  # Down
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y + BLOCK), (x + BLOCK//2 - 2, y + BLOCK + 4), 1)
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y + BLOCK), (x + BLOCK//2 + 2, y + BLOCK + 4), 1)
+            else:  # Up
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y), (x + BLOCK//2 - 2, y - 4), 1)
+                pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y), (x + BLOCK//2 + 2, y - 4), 1)
+    else:
+        # BODY - Scale pattern
+        # Base body color with gradient
+        rect = pygame.Rect(x + 1, y + 1, BLOCK - 2, BLOCK - 2)
+        
+        # Dark border for body segment
+        pygame.draw.rect(surface, (30, 150, 80), rect, border_radius=4)
+        
+        # Main body color
+        inner_rect = rect.inflate(-2, -2)
+        pygame.draw.rect(surface, (45, 200, 110), inner_rect, border_radius=3)
+        
+        # Scale pattern (diamond shapes)
+        center_x = x + BLOCK//2
+        center_y = y + BLOCK//2
+        
+        # Draw scale texture
+        scale_color = (35, 170, 90)
+        pygame.draw.circle(surface, scale_color, (center_x, center_y), 3)
+        
+        # Add some dots for texture
+        pygame.draw.circle(surface, (55, 220, 120), (x + 5, y + 5), 1)
+        pygame.draw.circle(surface, (55, 220, 120), (x + 15, y + 5), 1)
+        pygame.draw.circle(surface, (55, 220, 120), (x + 5, y + 15), 1)
+        pygame.draw.circle(surface, (55, 220, 120), (x + 15, y + 15), 1)
+        
+        # Belly stripe (lighter colored stripe in middle)
+        if prev_pos and next_pos:
+            dx_prev = x - prev_pos[0]
+            dy_prev = y - prev_pos[1]
+            dx_next = next_pos[0] - x
+            dy_next = next_pos[1] - y
+            
+            # Vertical movement
+            if dx_prev == 0 or dx_next == 0:
+                pygame.draw.rect(surface, (60, 240, 130), (x + 7, y + 2, 6, BLOCK - 4), border_radius=2)
+            # Horizontal movement
+            else:
+                pygame.draw.rect(surface, (60, 240, 130), (x + 2, y + 7, BLOCK - 4, 6), border_radius=2)
 
 def draw_button(surface, text, rect, hover=False):
     """Draw a button with hover effect"""
@@ -287,9 +363,11 @@ def survival_game():
         # DRAW
         screen.fill(BG_COLOR)
         
-        # Draw snake
+        # Draw snake with realistic segments
         for i, s in enumerate(snake):
-            draw_snake_segment(screen, s, is_head=(i == 0))
+            prev_pos = snake[i-1] if i > 0 else None
+            next_pos = snake[i+1] if i < len(snake)-1 else None
+            draw_snake_segment(screen, s, is_head=(i == 0), prev_pos=prev_pos, next_pos=next_pos)
         
         # Draw items with glow effect
         screen.blit(apple_img, food)
@@ -398,9 +476,11 @@ def level_game(level, total_score):
         # DRAW
         screen.fill(BG_COLOR)
         
-        # Draw snake
+        # Draw snake with realistic segments
         for i, s in enumerate(snake):
-            draw_snake_segment(screen, s, is_head=(i == 0))
+            prev_pos = snake[i-1] if i > 0 else None
+            next_pos = snake[i+1] if i < len(snake)-1 else None
+            draw_snake_segment(screen, s, is_head=(i == 0), prev_pos=prev_pos, next_pos=next_pos)
         
         # Draw obstacles with warning glow
         for o in obstacles:
