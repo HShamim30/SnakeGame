@@ -95,5 +95,5 @@ Features:
 ## 🔽 How to Clone the Project
 
 ```bash
-git clone https://github.com/your-username/snake-game-arcade-monster.git
+git clone https://github.com/HShamim30/snake-game-arcade-monster.git
 cd snake-game-arcade-monster
