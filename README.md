@@ -97,19 +97,21 @@ Features:
 ```bash
 git clone https://github.com/HShamim30/SnakeGame
 cd snake-game-arcade-monster
-
+```
 Install required library:
-
+```bash
 pip install pygame
-
+```
 🎨 Generate Game Assets (One Time Only)
 
 This project includes an automatic asset generator that creates all required images and sounds.
-
+```bash
 python generate_assets.py
-
+```
 
 This command will generate all images and sound files required to run the game.
 
 ▶️ How to Run the Game
+```bash
 python main.py
+```
