@@ -59,7 +59,7 @@ def draw_panel(surface, rect, alpha=200):
     surface.blit(panel, (rect[0], rect[1]))
     pygame.draw.rect(surface, HIGHLIGHT_COLOR, rect, 2, border_radius=10)
 
-def draw_snake_segment(surface, pos, is_head=False, prev_pos=None, next_pos=None):
+def draw_snake_segment(surface, pos, is_head=False, is_tail=False, prev_pos=None, next_pos=None):
     """Draw realistic snake segment with scales and texture"""
     x, y = pos
     
@@ -111,6 +111,68 @@ def draw_snake_segment(surface, pos, is_head=False, prev_pos=None, next_pos=None
             else:  # Up
                 pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y), (x + BLOCK//2 - 2, y - 4), 1)
                 pygame.draw.line(surface, (255, 50, 50), (x + BLOCK//2, y), (x + BLOCK//2 + 2, y - 4), 1)
+    
+    elif is_tail:
+        # TAIL - Tapered end
+        if prev_pos:
+            # Determine tail direction
+            dx = prev_pos[0] - x
+            dy = prev_pos[1] - y
+            
+            # Base color for tail
+            tail_color = (35, 170, 90)
+            tail_tip_color = (25, 140, 70)
+            
+            if dx > 0:  # Tail pointing left
+                # Draw tapered polygon
+                points = [
+                    (x + BLOCK, y + 2),
+                    (x + BLOCK, y + BLOCK - 2),
+                    (x + 2, y + BLOCK//2)
+                ]
+                pygame.draw.polygon(surface, tail_color, points)
+                pygame.draw.polygon(surface, tail_tip_color, points, 2)
+                
+            elif dx < 0:  # Tail pointing right
+                points = [
+                    (x, y + 2),
+                    (x, y + BLOCK - 2),
+                    (x + BLOCK - 2, y + BLOCK//2)
+                ]
+                pygame.draw.polygon(surface, tail_color, points)
+                pygame.draw.polygon(surface, tail_tip_color, points, 2)
+                
+            elif dy > 0:  # Tail pointing up
+                points = [
+                    (x + 2, y + BLOCK),
+                    (x + BLOCK - 2, y + BLOCK),
+                    (x + BLOCK//2, y + 2)
+                ]
+                pygame.draw.polygon(surface, tail_color, points)
+                pygame.draw.polygon(surface, tail_tip_color, points, 2)
+                
+            else:  # Tail pointing down
+                points = [
+                    (x + 2, y),
+                    (x + BLOCK - 2, y),
+                    (x + BLOCK//2, y + BLOCK - 2)
+                ]
+                pygame.draw.polygon(surface, tail_color, points)
+                pygame.draw.polygon(surface, tail_tip_color, points, 2)
+            
+            # Add tip highlight
+            if dx > 0:
+                pygame.draw.circle(surface, (30, 150, 80), (x + 2, y + BLOCK//2), 2)
+            elif dx < 0:
+                pygame.draw.circle(surface, (30, 150, 80), (x + BLOCK - 2, y + BLOCK//2), 2)
+            elif dy > 0:
+                pygame.draw.circle(surface, (30, 150, 80), (x + BLOCK//2, y + 2), 2)
+            else:
+                pygame.draw.circle(surface, (30, 150, 80), (x + BLOCK//2, y + BLOCK - 2), 2)
+        else:
+            # Fallback if no prev_pos
+            pygame.draw.circle(surface, (35, 170, 90), (x + BLOCK//2, y + BLOCK//2), BLOCK//3)
+    
     else:
         # BODY - Scale pattern
         # Base body color with gradient
@@ -258,7 +320,6 @@ def start_survival_mode():
         result = survival_game()
         if result == "MENU": 
             return
-        # Agar RESTART hai to loop continue karega
 
 def survival_game():
     snake = [(100, 100)]
@@ -363,11 +424,13 @@ def survival_game():
         # DRAW
         screen.fill(BG_COLOR)
         
-        # Draw snake with realistic segments
+        # Draw snake with realistic segments including tail
         for i, s in enumerate(snake):
             prev_pos = snake[i-1] if i > 0 else None
             next_pos = snake[i+1] if i < len(snake)-1 else None
-            draw_snake_segment(screen, s, is_head=(i == 0), prev_pos=prev_pos, next_pos=next_pos)
+            is_head = (i == 0)
+            is_tail = (i == len(snake) - 1)
+            draw_snake_segment(screen, s, is_head=is_head, is_tail=is_tail, prev_pos=prev_pos, next_pos=next_pos)
         
         # Draw items with glow effect
         screen.blit(apple_img, food)
@@ -402,9 +465,9 @@ def start_level_mode():
             result, level_score = level_game(level, total_score)
             
             if result == "MENU":
-                return  # Main menu pe jaao
+                return
             elif result == "RESTART":
-                break  # Level mode restart karo
+                break
             elif result == "NEXT":
                 total_score += level_score
                 level += 1
@@ -447,7 +510,7 @@ def level_game(level, total_score):
             save_score("level", total_score + apples * 10)
             return game_over_menu(total_score + apples * 10, "level"), apples * 10
         
-        # Obstacle collision - Static obstacles
+        # Obstacle collision
         if head in obstacles:
             over_snd.play()
             save_score("level", total_score + apples * 10)
@@ -476,11 +539,13 @@ def level_game(level, total_score):
         # DRAW
         screen.fill(BG_COLOR)
         
-        # Draw snake with realistic segments
+        # Draw snake with realistic segments including tail
         for i, s in enumerate(snake):
             prev_pos = snake[i-1] if i > 0 else None
             next_pos = snake[i+1] if i < len(snake)-1 else None
-            draw_snake_segment(screen, s, is_head=(i == 0), prev_pos=prev_pos, next_pos=next_pos)
+            is_head = (i == 0)
+            is_tail = (i == len(snake) - 1)
+            draw_snake_segment(screen, s, is_head=is_head, is_tail=is_tail, prev_pos=prev_pos, next_pos=next_pos)
         
         # Draw obstacles with warning glow
         for o in obstacles:
