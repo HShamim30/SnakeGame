@@ -334,20 +334,21 @@ def survival_game():
 
     while True:
         speed = 10
-        if len(snake) >= 10: speed = 20
+        if len(snake) >= 15: speed = 20
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_UP and direction != (0, BLOCK): 
+                # Arrow keys + WASD support
+                if (e.key == pygame.K_UP or e.key == pygame.K_w) and direction != (0, BLOCK): 
                     direction = (0, -BLOCK)
-                if e.key == pygame.K_DOWN and direction != (0, -BLOCK): 
+                if (e.key == pygame.K_DOWN or e.key == pygame.K_s) and direction != (0, -BLOCK): 
                     direction = (0, BLOCK)
-                if e.key == pygame.K_LEFT and direction != (BLOCK, 0): 
+                if (e.key == pygame.K_LEFT or e.key == pygame.K_a) and direction != (BLOCK, 0): 
                     direction = (-BLOCK, 0)
-                if e.key == pygame.K_RIGHT and direction != (-BLOCK, 0): 
+                if (e.key == pygame.K_RIGHT or e.key == pygame.K_d) and direction != (-BLOCK, 0): 
                     direction = (BLOCK, 0)
 
         head = (snake[0][0] + direction[0], snake[0][1] + direction[1])
@@ -474,9 +475,9 @@ def start_level_mode():
 
 def level_game(level, total_score):
     LEVELS = {
-        1: (5, 10, 0),
-        2: (6, 14, 12),
-        3: (6, 16, 15),
+        1: (5, 15, 0),
+        2: (6, 10, 12),
+        3: (6, 5, 15),
         4: (6, 20, 15)
     }
 
@@ -493,13 +494,14 @@ def level_game(level, total_score):
                 pygame.quit()
                 sys.exit()
             if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_UP and direction != (0, BLOCK): 
+                # Arrow keys + WASD support
+                if (e.key == pygame.K_UP or e.key == pygame.K_w) and direction != (0, BLOCK): 
                     direction = (0, -BLOCK)
-                if e.key == pygame.K_DOWN and direction != (0, -BLOCK): 
+                if (e.key == pygame.K_DOWN or e.key == pygame.K_s) and direction != (0, -BLOCK): 
                     direction = (0, BLOCK)
-                if e.key == pygame.K_LEFT and direction != (BLOCK, 0): 
+                if (e.key == pygame.K_LEFT or e.key == pygame.K_a) and direction != (BLOCK, 0): 
                     direction = (-BLOCK, 0)
-                if e.key == pygame.K_RIGHT and direction != (-BLOCK, 0): 
+                if (e.key == pygame.K_RIGHT or e.key == pygame.K_d) and direction != (-BLOCK, 0): 
                     direction = (BLOCK, 0)
 
         head = (snake[0][0] + direction[0], snake[0][1] + direction[1])
